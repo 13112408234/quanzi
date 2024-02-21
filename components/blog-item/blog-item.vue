@@ -1,12 +1,12 @@
 <template>
-	<view class="blog">
+	<view class="blog" @click="goDetail">
 		<!-- 头部 头像，用户名 时间开始 -->
 		<view class="sbian">
 			<view class="zb">
-				<view class="tx"><u-avatar :src="src" shape="circle" size = "20"></u-avatar></view>
-				<view class="yhm">用户名</view>
+				<view class="tx"><u-avatar :src="item.user_id[0].avatar_file ? item.user_id[0].avatar_file : '/static/images/panda.jpg' " shape="circle" size = "20"></u-avatar></view>
+				<view class="yhm">{{item.user_id[0].nickname ? item.user_id[0].nickname : item.user_id[0].username}}</view>
 				<view class="time">
-					<uni-dateformat :date="Date.now()  - 3600000 * 24 * 7" format="MM月dd hh:mm" :threshold="[60000,3600000*24*30]">
+					<uni-dateformat :date="item.publish_date" format="MM月dd hh:mm" :threshold="[60000,3600000*24*30]">
 					</uni-dateformat>
 				</view>
 			</view>
@@ -16,21 +16,12 @@
 		</view>
 		<!-- 头部 头像，用户名 时间结束 -->
 		<!-- 中间 文章标题 文章描述 文章图片开始 -->
-		 <view class="zhojian">
-			 <view class="biaoti"><h4>前端开发之vue基础篇</h4></view>
-			 <view class="msu">v-if 是控制组件显示和隐藏，组件的生命周期也不同，为true时，会触发组件的创建和绑定生命周期，为false时会触发销毁的生命周期函数</view>
+		 <view class="zhojian" >
+			 <view class="biaoti"><h4>{{item.title}}</h4></view>
+			 <view class="msu">{{item.description}}</view>
 		     <view class="_image">
-				 <view>
-					 <u--image src="https://cdn.uviewui.com/uview/album/1.jpg" shape="square" radius="10%" width="300rpx" height="225rpx">
-					 </u--image>
-				 </view>
-				 <view>
-				      <u--image src="https://cdn.uviewui.com/uview/album/1.jpg" shape="square" radius="10%" width="300rpx" height="225rpx">
-				 	  </u--image>
-				 </view>
-				 <view>
-				      <u--image src="https://cdn.uviewui.com/uview/album/1.jpg" shape="square" radius="10%" width="300rpx" height="225rpx">
-				 	  </u--image>
+				 <view v-for="(img,index) in item.picurls" :key="img">
+					 <image :src="img" @click.stop="djimg(index)"></image>
 				 </view>
 			</view>
 		 </view>
@@ -39,15 +30,15 @@
 		<view class="xiamian">
 			 <view>
 				 <text class="iconfont icon-a-27-liulan"></text>
-				 <text>103</text>
+				 <text>{{item.view_count}}</text>
 			 </view>
 			 <view>
 				 <text class="iconfont icon-a-5-xinxi"></text>
-				 <text>评论</text>
+				 <text>{{item.comment_count?item.comment_count:'评论'}}</text>
 			 </view>
 			 <view>
 				 <text class="iconfont icon-a-106-xihuan"></text>
-				 <text>1</text>
+				 <text>{{item.like_count?item.like_count:'点赞'}}</text>
 			 </view>
 		</view>
 		<!-- 点赞评论收藏结束 -->
@@ -57,11 +48,33 @@
 <script>
 	export default {
 		name:"blog-item",
+		props:{
+			item:{
+				type:Object
+			}
+		},
 		data() {
 			return {
-				src: 'https://cdn.uviewui.com/uview/album/1.jpg'
 			};
-		}
+		},
+		methods:{
+			goDetail(e){
+				console.log("列表被点击了")
+				//把id传给详情页
+				uni.navigateTo({
+					url:'/pages/detail/detail?id='+this.item._id
+				})
+			},
+			//在列表点击预览图片
+			djimg(index,e){
+				 console.log('img被点击');
+				uni.previewImage({
+					current:index,
+					urls:this.item.picurls
+				})
+				
+			}
+		},
 	}
 </script>
 
@@ -125,7 +138,13 @@
 			     display: flex;
 			      flex-wrap: wrap;
 			       margin: 0.5rpx;
-				   
+				   width: 31%;
+				 image{
+                    width: 100%; /* 设置图片宽度为容器宽度的100% */
+                      height: auto; /* 高度自适应，保持原始宽高比例 */
+                      aspect-ratio: 3 / 2; /* 设置图片的宽高比例为3:2 */
+                      max-width: 100%; /* 设置图片的最大宽度为容器宽度 */
+				 }
 				   
 		   }
 	  }

@@ -20,11 +20,13 @@ export function getProvince() {
 	return new Promise((resolve, reject) => {
 		//获取本地是否存储ip省份
 		let historyProvince = uni.getStorageSync("historyProvince")
+		
 		if (historyProvince) {
 			
 			//如果缓存的数据超过1个小时，则重新发送网络请求，1000代表1秒
 			//1000*60代表1分钟，1000*60*60代表1小时
 			if((Date.now() - historyProvince.time) > 1000*60*60){
+				
 				console.log("本地数据过期，重新发起请求")
 				 getIp().then(res =>{
 				 	resolve(res)

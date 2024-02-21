@@ -40,7 +40,8 @@
 
 <script>
 	import {getImigSrc,getProvince} from '@/utils/tool.js'
-	
+	// 关联数据库
+	const db = uniCloud.database()
 	export default {
 		data() {
 			return {
@@ -68,15 +69,63 @@
 		},
 		
 		onLoad() {
-		  //获取用户ip省份
-		 getProvince().then(res=>{
-			 this.province = res
-			 console.log(this.province)
-		 })
+		
 		
 		
 		},
 		methods:{
+			
+			
+			//提交
+			onSubmit(){
+			 this.editorCtx.getContents({
+				    
+					success:async  res=>{
+						//上传中出现等待loading，mask是用户界面无法操作
+						uni.showLoading({
+							title: "上传中请稍后",
+							mask:true
+						})
+						//保存摘要信息
+						this.artObj.description = res.text.slice(0,100)
+						this.artObj.content = res.html
+						console.log("获取摘要")
+						//获取所有的图片地址
+						 this.artObj.picurls = getImigSrc(res.html)
+						 console.log("获取图片")
+						 //获取省份
+						 //获取用户ip省份
+						await getProvince().then(res=>{
+							console.log("用户ip省份")
+						 	this.artObj.province = res
+						 })
+						 console.log("发起网络添加")
+						 await this.getsumit_add()
+						console.log(this.artObj)
+					}
+				})
+				
+			},
+			
+			getsumit_add(){
+				db.collection('quanzi_article').add({
+					...this.artObj
+				}).then(res=>{
+					uni.hideLoading()
+					uni.showToast({
+						title: "发布成功"
+					})
+					setTimeout(()=>{
+						// 关闭所有页面，然后再打开某一个页面
+						uni.reLaunch({
+							url: "/pages/index/index"
+						})
+					},800)
+				}).catch(err=>{
+					console.log(err)
+				})
+			},
+			
 			
 	       //初始化
 		   onEditReady(){
@@ -189,21 +238,7 @@
 				this.jcClass = e.detail.bold ? true : false
 				this.italicClass = e.detail.italic ? true : false
 			},
-			
-			//提交
-			onSubmit(){
-				this.editorCtx.getContents({
-					success:res=>{
-						console.log(res)
-						//保存摘要信息
-						this.artObj.description = res.text.slice(0,100)
-						this.artObj.content = res.html
-						//获取所有的图片地址
-						 this.artObj.picurls = getImigSrc(res.html)
-						console.log(this.artObj)
-					}
-				})
-			},
+
 			
 			
            

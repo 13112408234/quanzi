@@ -18,46 +18,82 @@
 		   
 		   <!-- 主体 -->
 	      <view class="content">
-			   <view class="item" v-for="item in listData">
-				   <blog-item></blog-item>
+			   <view class="item" v-for="item in essayDataList">
+				   <blog-item :item="item"></blog-item>
 			   </view>
 		  </view>
 		  
+		  
 		  <!-- 编辑图标 -->
 		  <view class="edit">
-			   <text class="iconfont icon-a-21-xiugai"></text>
+			   <text class="iconfont icon-a-21-xiugai" @click="goEdit"></text>
 		  </view>
 		  
 	</view>
 </template>
 
 <script>
+	const db = uniCloud.database()
 	export default {
 		data() {
 			return {
 				//导航栏数据
 				navlist: [
 					{
-						name: '最新'
+						name: '最新',
+						type: 'publish_date'
 					},
 					{
-						name: '热门'
+						name: '热门',
+						type: 'view_count'
 					}
 				],
+				
 				//导航栏指定第几个被激活
-				current: 1,
+				current: 0,
 				//控制骨架屏显示和隐藏
 				loadState : true,
-				//主体数据
-				listData:[1,2,3]
+				//文章列表
+				essayDataList:[]
 			}
 		},
 		onLoad() {
-
+            this.getDate()
 		},
 		methods: {
+			//网络请求数据
+			getDate(){
+				//field可以指定返回哪一些字段
+				 let artTemp = db.collection("quanzi_article")
+				 .field("title,user_id,description,picurls,view_count,like_count,comment_count,publish_date").getTemp()
+				 let userTemp = db.collection("uni-id-users").field("_id,username,nickname,avatar_file").getTemp()
+				 //orderBy("publish_date desc")倒叙排列
+				 db.collection(artTemp,userTemp).orderBy(this.navlist[this.current].type,"desc").get().then(res=>{
+					  
+					 this.essayDataList = res.result.data
+					 for (let i = 0; i < this.essayDataList.length; i++) {
+					 	this.essayDataList[i].picurls.splice(3)
+					 }
+					 //隐藏骨架屏
+					 this.loadState = false
+					 console.log(this.essayDataList)
+				 })
+			},
+			//点击跳转编辑文章按钮
+			goEdit(){
+				uni.navigateTo({
+					url:'/pages/edit/edit'
+				})
+			},
             clickNav(e){
 				 console.log(e)
+				 this.current = e.index
+				 //清空文章列表
+				this.essayDataList=[]
+				//显示骨架屏
+				this.loadState = true
+				 //重新发送网络请求
+				 this.getDate()
 			}
 		}
 	}
