@@ -1,20 +1,25 @@
 <template>
 	<view class="seif">
 		<!-- 上面开始 -->
-		<view class="sm" @click="login">
-<!-- 			<view class="img" style="background-image: url('../../static/images/user-default.jpg"></view> -->
-			<image src="/static/images/user-default.jpg" alt="" class="img">
+		<view class="sm" v-if="hasLogin" @click="userInfo1">
 			
+			<image v-if="hasLogin&&userInfo.avatar_file&&userInfo.avatar_file.url" :src="userInfo.avatar_file.url" alt="" class="img">
+			<image v-else :src="UserAvatar()" alt="" class="img">
 			<!-- 左边开始-->
 			<view class="yh">
 				<!-- 头像 -->
-				<view class="tx"><u-avatar src='/static/images/user-default.jpg' shape="circle" size="60"></u-avatar>
+				<view class="tx">
+					<u-avatar v-if="hasLogin&&userInfo.avatar_file&&userInfo.avatar_file.url" :src="userInfo.avatar_file.url" shape="circle" size="60">			
+					</u-avatar>
+					<u-avatar v-else :src='UserAvatar()' shape="circle" size="60" @click="login">
+					</u-avatar>
 				</view>
 				<!-- 用户信息 -->
 				<view class="yhxx">
-					<text class="name">匿名</text>
+					<text class="name">{{giveName(userInfo)}}</text>
 					<view class="sf">
-						<text>6分钟前注册</text>
+						<text><uni-dateformat :date="userInfo.register_date" format="yyyy年MM月dd hh:mm ">
+							</uni-dateformat></text>
 					</view>
 				</view>
 			</view>
@@ -25,6 +30,35 @@
 			</view>
 			<!-- 右边结束 -->
 		</view>
+		
+	<!-- 上面开始 -->
+		<view class="sm" v-else @click="login">
+			<image src="/static/images/user-default.jpg" alt="" class="img">
+			<!-- 左边开始-->
+			<view class="yh">
+				<!-- 头像 -->
+				<view class="tx">
+					<u-avatar  src='/static/images/user-default.jpg' shape="circle" size="60" @click="login">
+					</u-avatar>
+				</view>
+				<!-- 用户信息 -->
+				<view class="yhxx">
+					<text class="name">点击登录</text>
+				</view>
+			</view>
+			<!-- 左边结束 -->
+			<!-- 右边开始 -->
+			<view class="yb">
+				<text class="iconfont icon-a-10-you"></text>
+			</view>
+			<!-- 右边结束 -->
+		</view>
+		
+		
+		
+		
+		
+		
 		<!-- 上面结束 -->
 		<!-- <button type="default" @click="login">登录</button> -->
 		<view class="xm">
@@ -48,15 +82,15 @@
 <!-- 			<view class="jh"><text class="iconfont icon-add-select"></text></view> -->
 			<!-- 用户评论点赞的各种详情信息开始 -->
 			<view class="Information">
-				<view class="wenz">
-					<view class="cw">
+				<view class="wenz" @click="cwen">
+					<view class="cw" >
 						<text class="iconfont icon-a-24-bianji"></text>
 						<text>我的长文</text>
 					</view>
 					<view><text class="iconfont icon-a-10-you"></text></view>
 				</view>
 				
-				<view class="wenz">
+				<view class="wenz" @click="user_like">
 					<view class="cw">
 						<text class="iconfont icon-a-106-xihuan"></text>
 						<text>我的点赞</text>
@@ -80,7 +114,7 @@
 					</view>
 					<view><text class="iconfont icon-a-10-you"></text></view>
 				</view>
-				<view class="wenz">
+				<view class="wenz" @click="FeedBack">
 					<view class="cw">
 						<text class="iconfont icon-a-5-xinxi"></text>
 						<text>意见反馈</text>
@@ -88,16 +122,18 @@
 					<view><text class="iconfont icon-a-10-you"></text></view>
 				</view>
 				<!-- 下划线 -->
-				<view class="borderBut"></view>
+				<view class="borderBut" v-show="hasLogin"></view>
 				
-				<view class="wenz">
-					<view class="cw">
+				<view class="wenz" @click="logout" v-if="hasLogin">
+					<view class="cw" >
 						<text class="iconfont icon-a-73-tuichu"></text>
 						<text>退出登录</text>
 					</view>
 					<view><text class="iconfont icon-a-10-you"></text></view>
 				</view>
-				
+				<!-- user_id -->
+				<!-- <view>{{userInfo}}</view> -->
+			<!-- 	<view>{{hasLogin}}</view> -->
 			</view>
 			<!-- 用户评论点赞的各种详情信息结束 -->
 			
@@ -107,23 +143,85 @@
 </template>
 
 <script>
+	import {
+		store,
+		mutations
+	} from '@/uni_modules/uni-id-pages/common/store.js'
+	import {giveName,UserAvatar} from '@/utils/tool.js'
 	export default {
 		data() {
 			return {
 
 			}
 		},
+		computed:{
+			
+			userInfo() {
+				return store.userInfo
+			},
+			hasLogin(){
+				return store.hasLogin
+			},
+			
+		},
 		onLoad() {
-
+            console.log(store.userInfo)
+			console.log(uniCloud.getCurrentUserInfo().tokenExpired)
+			console.log(UserAvatar(0))
+			
 		},
 		methods: {
+			giveName,
+			UserAvatar,
+			//意见反馈
+			FeedBack(){
+				uni.navigateTo({
+					url:'/uni_modules/uni-feedback/pages/opendb-feedback/edit'
+				})
+			},
+			//我的点赞
+			user_like(){
+				uni.navigateTo({
+					url:'/pages/seif/user-like/user-like'
+				})
+			},
+			//长文
+			cwen(){
+				uni.navigateTo({
+					url:'/pages/seif/LongArticle/LongArticle'
+				})
+			},
+			
 			//登录
 			login() {
 				uni.navigateTo({
 					url: '/uni_modules/uni-id-pages/pages/login/login-withpwd',
 				})
+			},
+			//个人资料
+			userInfo1(){
+				uni.navigateTo({
+					url:'/uni_modules/uni-id-pages/pages/userinfo/userinfo'
+				})
+			},
+			
+			//退出登录
+			logout(){
+				uni.showModal({
+					title:"是否退出登录",
+					success:res=>{
+						if(res.confirm){
+							mutations.logout()
+						}
+						// 提示退出成功
+						// uni.showToast({
+						// 	title:"退出成功",
+						//      icon:'none'
+						// })
+					}
+				})
 			}
-		}
+		},
 	}
 </script>
 
@@ -214,13 +312,13 @@
 		// 下面开始  "C:\Program Files (x86)\Tencent\微信web开发者工具\微信开发者工具.exe"  "C:\Program Files (x86)\Tencent\微信web开发者工具\code\package.nw\node_modules\node-float-pigment-css"
 		.xm{ 
 			position: absolute;
-			top: 290rpx;
+			top: 280rpx;
 			 left: 0;
 			width: 100%;
 			height: calc(100% - 280rpx);
 			 background-color: #fff;
 			z-index: 10;
-			border-radius: 40rpx 40rpx 0 0;
+			border-radius: 35rpx;
 			//用户点赞数量和评论数量开始
 			.hzang{
 				display: flex;

@@ -6,10 +6,17 @@ const db = uniCloud.database();
 const usersTable = db.collection('uni-id-users')
 
 let hostUserInfo = uni.getStorageSync('uni-id-pages-userInfo')||{}
+
+//uniCloud.getCurrentUserInfo().tokenExpired 可以获取当前用户的token过期时间
+//再减去当前的时间来看看是否过期
+let tokenTime = uniCloud.getCurrentUserInfo().tokenExpired - Date.now()
+console.log(uniCloud.getCurrentUserInfo().tokenExpired)
+console.log('过期了没有'+tokenTime)
+if(tokenTime <= 0 ) hostUserInfo = {}
 // console.log( hostUserInfo);
 const data = {
 	userInfo: hostUserInfo,
-	hasLogin: Object.keys(hostUserInfo).length != 0
+	hasLogin: Object.keys(hostUserInfo).length != 0 && tokenTime > 0
 }
 
 // console.log('data', data);
@@ -42,9 +49,9 @@ export const mutations = {
 			})
 			try {
 				let res = await usersTable.where("'_id' == $cloudEnv_uid")
-					.field('mobile,nickname,username,email,avatar_file')
+					.field('mobile,nickname,username,email,avatar_file,register_date')
 					.get()
-
+                console.log(res)
 				const realNameRes = await uniIdCo.getRealNameInfo()
 
 				// console.log('fromDbData',res.result.data);
@@ -76,10 +83,13 @@ export const mutations = {
 				console.error(e);
 			}
 		}
+		//清空本地token
 		uni.removeStorageSync('uni_id_token');
+		//设置过期时间，设置0当前token直接失效
 		uni.setStorageSync('uni_id_token_expired', 0)
+		//退出登录之后跳转哪一个页面
 		uni.redirectTo({
-			url: `/${pagesJson.uniIdRouter && pagesJson.uniIdRouter.loginPage ? pagesJson.uniIdRouter.loginPage: 'uni_modules/uni-id-pages/pages/login/login-withoutpwd'}`,
+			url: 'pages/self/self',
 		});
 		uni.$emit('uni-id-pages-logout')
 		this.setUserInfo({},{cover:true})
@@ -96,13 +106,17 @@ export const mutations = {
 			}
 		})
 		// console.log('判断需要返回几层:', delta);
+		console.log(uniIdRedirectUrl)
 		if (uniIdRedirectUrl) {
+			console.log('执行跳转中')
 			return uni.redirectTo({
 				url: uniIdRedirectUrl,
 				fail: (err1) => {
+					console.log('redirectTo跳转失败')
 					uni.switchTab({
 						url:uniIdRedirectUrl,
 						fail: (err2) => {
+							console.log('switchTab跳转失败')
 							console.log(err1,err2)
 						}
 					})
